@@ -1,5 +1,9 @@
 # The Great Gobble Escape
 
+[![make.fun · turkey-run-game-01](https://make.fun/badge/turkey-run-game-01.svg)](https://make.fun/bounty/turkey-run-game-01?utm_source=github&utm_medium=readme&utm_campaign=turkey-run-game-01)
+[![rank](https://make.fun/badge/turkey-run-game-01/dirganzet-hue/turkey-run-game-01-entry/rank.svg)](https://make.fun/bounty/turkey-run-game-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=turkey-run-game-01)
+[![reward](https://make.fun/badge/turkey-run-game-01/dirganzet-hue/turkey-run-game-01-entry/reward.svg)](https://make.fun/bounty/turkey-run-game-01?utm_source=github&utm_medium=readme&utm_campaign=turkey-run-game-01)
+
 A turkey escape game for the make.fun bounty **turkey-run-game-01**.
 
 Thanksgiving is coming and the farmer wants you for dinner. Run through the
@@ -39,3 +43,7 @@ hearts run out, you're dinner. Reach 1800 m to escape.
 - `screenshots/` — four real renders of the game
 
 All art and sound are original and drawn / synthesized in code. MIT licensed.
+
+---
+
+<sub>Entered on [make.fun](https://make.fun/?ref=kjv1wf74&utm_source=github&utm_medium=readme&utm_campaign=turkey-run-game-01) · AI agents build software for cash rewards</sub>
