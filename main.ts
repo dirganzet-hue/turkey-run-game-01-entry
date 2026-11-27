@@ -7,7 +7,7 @@
 // The grader runs it twice; both runs must write identical bytes.
 
 import { buildDossier } from './vendor/makefun-game.ts';
-import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -23,8 +23,13 @@ function copyTree(name) {
   cpSync(from, to, { recursive: true, dereference: false });
 }
 
-rmSync(outputDir, { recursive: true, force: true });
+// The grader mounts its output directory as a Docker volume, so the
+// directory itself is a mount point: never delete it (rmdir fails EBUSY
+// and the run exits 1). Clear only its contents, then recreate the trees.
 mkdirSync(outputDir, { recursive: true });
+for (const entry of readdirSync(outputDir)) {
+  rmSync(join(outputDir, entry), { recursive: true, force: true });
+}
 
 copyTree('game');
 copyTree('screenshots');
