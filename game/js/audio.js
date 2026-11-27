@@ -1,5 +1,6 @@
 // SoundBank — every sound in the game is synthesized with WebAudio.
 // No audio files, no network: oscillators and filtered noise only.
+// Zombie edition: groans, squawks, cackles, slime and brain chimes.
 
 export class SoundBank {
   constructor() {
@@ -65,12 +66,10 @@ export class SoundBank {
     src.start(t0);
   }
 
-  // The turkey's signature call: a wobbling "gobble-gobble".
-  gobble() {
-    this.tone(320, 0.09, 'square', 0.16, 180);
-    this.tone(300, 0.09, 'square', 0.16, 170, 0.1);
-    this.tone(360, 0.12, 'square', 0.18, 200, 0.2);
-    this.tone(300, 0.14, 'square', 0.14, 150, 0.32);
+  // The zombie turkey's call: a low wobbling groan.
+  groan() {
+    this.tone(90, 0.5, 'sawtooth', 0.16, 55);
+    this.tone(135, 0.4, 'sawtooth', 0.09, 80, 0.05);
   }
 
   flap() {
@@ -91,14 +90,40 @@ export class SoundBank {
     if (golden) this.tone(1320, 0.12, 'triangle', 0.16, 1760, 0.08);
   }
 
+  // Brain-corn: a bright rising chime, worth the risk.
+  brain() {
+    [523, 659, 784, 1046].forEach((f, i) => this.tone(f, 0.14, 'triangle', 0.2, null, i * 0.07));
+  }
+
   dash() {
     this.noise(0.35, 0.28, 2400);
     this.tone(180, 0.3, 'sawtooth', 0.1, 720);
   }
 
+  slime() {
+    this.tone(220, 0.2, 'sine', 0.16, 60);
+  }
+
   hurt() {
     this.tone(220, 0.25, 'sawtooth', 0.22, 70);
     this.tone(110, 0.3, 'square', 0.14, 60, 0.05);
+  }
+
+  // The zombie crow's harsh cry.
+  squawk() {
+    this.tone(1200, 0.09, 'square', 0.12, 700);
+    this.tone(1400, 0.08, 'square', 0.1, 900, 0.09);
+  }
+
+  // The zombie chicken's cackle.
+  cackle() {
+    [900, 700, 950, 650].forEach((f, i) => this.tone(f, 0.07, 'square', 0.09, null, i * 0.06));
+  }
+
+  // Something crawls out of the grave again.
+  rise() {
+    this.tone(60, 0.6, 'sawtooth', 0.18, 180);
+    this.noise(0.4, 0.16, 300);
   }
 
   fanfare() {

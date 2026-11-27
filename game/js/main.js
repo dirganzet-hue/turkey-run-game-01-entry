@@ -1,16 +1,21 @@
-// main — The Great Gobble Escape. Game loop, state machine, spawning,
-// collisions, scoring and the title / caught / escaped screens.
-// Wires together turkey, farmer, obstacles, levels, render, audio and input.
+// main — Zombie Turkey Escape Run. Game loop, state machine, spawning,
+// collisions, scoring and the title / caught / escaped screens. The
+// zombie turkey flees the zombie farmer through the Graveyard, the
+// Haunted Barn and the Cursed Kitchen. New in this revision: brain-corn
+// (100 x combo), the night fog that limits vision, zombie chickens that
+// RISE AGAIN after being smashed, zombie crows to slide under, a chained
+// combo with a visible timer, and a zombie dash that leaves a slime trail.
 
 import { Turkey } from './turkey.js';
 import { Farmer } from './farmer.js';
 import {
-  makeFence, makeHaystack, makeSwingKnife, makeFallingKnife, makeOven,
-  makeCorn, makeHotSauce, makeBush,
+  makeFence, makeTombstone, makeHaystack, makeZombieCrow, makeZombieChicken,
+  makeSwingKnife, makeFallingKnife, makeOven,
+  makeCorn, makeBrainCorn, makeHotSauce, makeBush,
   hitsTurkey, updateObstacle, drawObstacle,
 } from './obstacles.js';
-import { STAGES, stageIndexFor, stageFor, pickSpawnKind, ESCAPE_DISTANCE } from './levels.js';
-import { Particles, drawBackground, drawHud } from './render.js';
+import { STAGES, stageIndexFor, stageFor, pickSpawnKind, cornArcOver, ESCAPE_DISTANCE } from './levels.js';
+import { Particles, drawBackground, drawFog, drawHud } from './render.js';
 import { SoundBank } from './audio.js';
 import { Input } from './input.js';
 import { Rng } from './rng.js';
@@ -20,6 +25,7 @@ const WIDTH = 1280;
 const HEIGHT = 720;
 const GROUND_Y = 600;
 const PX_PER_METRE = 50;
+const COMBO_WINDOW = 4;
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -32,6 +38,7 @@ const game = {
   distance: 0,
   score: 0,
   corn: 0,
+  brains: 0,
   combo: 1,
   comboTimer: 0,
   hearts: 3,
@@ -73,6 +80,7 @@ function startRun() {
   game.distance = 0;
   game.score = 0;
   game.corn = 0;
+  game.brains = 0;
   game.combo = 1;
   game.comboTimer = 0;
   game.hearts = 3;
@@ -91,9 +99,9 @@ function startRun() {
   game.input.consumeDash();
   game.input.consumeRestart();
   game.input.consumeAny();
-  showBanner('STAGE 1 — FARMYARD', 'Run, Gobbler, run!');
+  showBanner('STAGE 1 — GRAVEYARD', 'The dead run at night...');
   game.sounds.ensure();
-  game.sounds.gobble();
+  game.sounds.groan();
 }
 
 function endRun(caught) {
@@ -101,11 +109,11 @@ function endRun(caught) {
   game.best = Math.max(game.best, Math.floor(game.score));
   if (caught) {
     game.sounds.caughtSting();
-    game.particles.burst(game.turkey.x, game.turkey.y - 30, 'feather', 26);
+    game.particles.burst(game.turkey.x, game.turkey.y - 30, 'bone', 26);
   } else {
     game.sounds.escapedJingle();
     for (let i = 0; i < 5; i++) {
-      game.particles.burst(200 + i * 220, 140 + (i % 2) * 120, 'leaf', 14);
+      game.particles.burst(200 + i * 220, 140 + (i % 2) * 120, 'spark', 14);
     }
   }
 }
@@ -114,25 +122,34 @@ function hurtTurkey() {
   if (game.turkey.invuln > 0) return;
   game.hearts -= 1;
   game.combo = 1;
+  game.comboTimer = 0;
   game.turkey.invuln = 1.5;
   game.turkey.squash = 1;
   game.farmer.stumble();
   game.shakeTime = 0.35;
   game.sounds.hurt();
-  game.particles.burst(game.turkey.x, game.turkey.y - 30, 'feather', 16);
+  game.particles.burst(game.turkey.x, game.turkey.y - 30, 'slime', 16);
   flash('OUCH!');
   if (game.hearts <= 0) endRun(true);
 }
 
 function collectCorn(ob) {
   ob.taken = true;
-  game.corn += 1;
-  game.comboTimer = 3;
-  game.score += (ob.golden ? 50 : 10) * game.combo;
+  game.comboTimer = COMBO_WINDOW;
+  if (ob.kind === 'brainCorn') {
+    game.brains += 1;
+    game.score += 100 * game.combo;
+    game.sounds.brain();
+    game.particles.burst(ob.x + 15, ob.y + 20, 'brain', 12);
+    flash(`BRAIN-CORN! +${100 * game.combo}`);
+  } else {
+    game.corn += 1;
+    game.score += (ob.golden ? 50 : 10) * game.combo;
+    game.sounds.pickup(ob.golden);
+    game.particles.burst(ob.x + 15, ob.y + 20, 'spark', ob.golden ? 10 : 5);
+  }
   if (game.combo < 5) game.combo += 1;
   game.farmer.rewardCorn();
-  game.sounds.pickup(ob.golden);
-  game.particles.burst(ob.x + 15, ob.y + 20, 'leaf', ob.golden ? 10 : 5);
 }
 
 function spawnPattern() {
@@ -143,7 +160,16 @@ function spawnPattern() {
     case 'fence': {
       game.obstacles.push(makeFence(x, GROUND_Y));
       if (game.rng.chance(0.6)) {
-        for (const c of [{ x: x + 4, y: GROUND_Y - 168 }, { x: x + 30, y: GROUND_Y - 186 }]) {
+        for (const c of cornArcOver(game.rng, x, GROUND_Y)) {
+          game.obstacles.push(makeCorn(c.x, c.y, false));
+        }
+      }
+      break;
+    }
+    case 'tombstone': {
+      game.obstacles.push(makeTombstone(x, GROUND_Y));
+      if (game.rng.chance(0.6)) {
+        for (const c of cornArcOver(game.rng, x, GROUND_Y)) {
           game.obstacles.push(makeCorn(c.x, c.y, false));
         }
       }
@@ -154,6 +180,12 @@ function spawnPattern() {
       if (game.rng.chance(0.5)) game.obstacles.push(makeCorn(x + 90, GROUND_Y, false));
       break;
     }
+    case 'zombieCrow':
+      game.obstacles.push(makeZombieCrow(x, GROUND_Y));
+      break;
+    case 'zombieChicken':
+      game.obstacles.push(makeZombieChicken(x, GROUND_Y));
+      break;
     case 'swingKnife':
       game.obstacles.push(makeSwingKnife(x, GROUND_Y, game.rng.range(0, 3)));
       break;
@@ -174,6 +206,9 @@ function spawnPattern() {
     case 'goldenCorn':
       game.obstacles.push(makeCorn(x, GROUND_Y, true));
       break;
+    case 'brainCorn':
+      game.obstacles.push(makeBrainCorn(x, GROUND_Y));
+      break;
     case 'hotSauce':
       game.obstacles.push(makeHotSauce(x, GROUND_Y));
       break;
@@ -190,17 +225,20 @@ function updatePlaying(dt) {
   const stage = currentStage();
   const speed = stage.speed * (game.turkey.dashing ? 1.6 : 1);
 
-  // Dash.
+  // Zombie dash: a burst of speed that leaves a slime trail.
   if (game.input.consumeDash() && game.turkey.startDash()) {
     game.sounds.dash();
     game.farmer.dashAway();
-    flash('HOT SAUCE DASH!');
+    flash('ZOMBIE DASH!');
+  }
+  if (game.turkey.dashing) {
+    game.particles.burst(game.turkey.x - 30, game.turkey.y - 20, 'slime', 2);
   }
 
   const jumpEvent = game.turkey.update(dt, game.input, speed);
   if (jumpEvent === 'jump') {
     game.sounds.jump();
-    game.particles.burst(game.turkey.x, GROUND_Y, 'dust', 4);
+    game.particles.burst(game.turkey.x, GROUND_Y, 'slime', 4);
   } else if (jumpEvent === 'land') {
     game.sounds.thud();
   }
@@ -242,7 +280,7 @@ function updatePlaying(dt) {
   const turkeyBox = game.turkey.bounds();
   for (const ob of game.obstacles) {
     updateObstacle(ob, dt, speed, game.time);
-    if (ob.kind === 'corn' || ob.kind === 'goldenCorn' || ob.kind === 'hotSauce') {
+    if (ob.kind === 'corn' || ob.kind === 'goldenCorn' || ob.kind === 'brainCorn' || ob.kind === 'hotSauce') {
       if (!ob.taken) {
         // Pickups use a generous box of their own.
         const box = { x: ob.x, y: ob.y - 6, w: ob.w, h: ob.h + 12 };
@@ -267,9 +305,34 @@ function updatePlaying(dt) {
         && turkeyBox.y < ob.y + ob.h && turkeyBox.y + turkeyBox.h > ob.y) {
         ob.used = true;
         game.farmer.loseTrack();
-        game.sounds.gobble();
-        flash('HIDDEN IN THE BUSH!');
-        game.particles.burst(ob.x + ob.w / 2, ob.y + 10, 'leaf', 12);
+        game.sounds.groan();
+        flash('HIDDEN IN THE BRAMBLES!');
+        game.particles.burst(ob.x + ob.w / 2, ob.y + 10, 'slime', 12);
+      }
+      continue;
+    }
+    if (ob.kind === 'zombieCrow' && !ob.squawked && ob.x < game.turkey.x + 520) {
+      ob.squawked = true;
+      game.sounds.squawk();
+    }
+    // A smashed zombie chicken lies in bones for 2.5 s, then RISES AGAIN —
+    // in place if the bones are still mid-screen, else at the right edge.
+    // A chicken with no rises left stays a pile of bones and is pruned.
+    if (ob.kind === 'zombieChicken' && ob.dead > 0) {
+      ob.dead -= dt;
+      if (ob.dead <= 0) {
+        if (ob.risesLeft > 0) {
+          ob.risesLeft -= 1;
+          ob.x = ob.x > 500 ? ob.x : 1150;
+          ob.dead = 0;
+          ob.risen = true;
+          ob.approach += 40;
+          game.sounds.rise();
+          game.particles.burst(ob.x, GROUND_Y - 30, 'bone', 18);
+          flash('IT ROSE AGAIN!');
+        } else {
+          ob.passed = true;
+        }
       }
       continue;
     }
@@ -278,8 +341,17 @@ function updatePlaying(dt) {
         ob.passed = true;
         game.score += 25;
         game.sounds.thud();
-        game.particles.burst(ob.x + ob.w / 2, ob.y + 20, 'leaf', 18);
+        game.particles.burst(ob.x + ob.w / 2, ob.y + 20, 'slime', 18);
         flash('SMASHED THROUGH!');
+        continue;
+      }
+      if (ob.kind === 'zombieChicken' && game.turkey.dashing) {
+        ob.dead = 2.5;
+        game.score += 25;
+        game.sounds.slime();
+        game.sounds.cackle();
+        game.particles.burst(ob.x + ob.w / 2, ob.y + 10, 'bone', 18);
+        flash(ob.risesLeft > 0 ? 'SMASHED! IT WILL RISE...' : 'SMASHED FOR GOOD!');
         continue;
       }
       hurtTurkey();
@@ -289,11 +361,13 @@ function updatePlaying(dt) {
     }
   }
 
-  // Prune spent obstacles.
+  // Prune spent obstacles. Bones stay until they rise again.
   game.obstacles = game.obstacles.filter((ob) => {
     if (ob.taken) return false;
     if (ob.kind === 'fallingKnife' && ob.state === 'stuck' && ob.timer <= 0) return false;
     if (ob.kind === 'haystack' && ob.passed) return false;
+    if (ob.kind === 'zombieChicken' && ob.passed) return false;
+    if (ob.kind === 'zombieChicken' && ob.dead > 0) return true;
     return ob.x > -220;
   });
 
@@ -333,42 +407,42 @@ function drawTitleScreen() {
 
   ctx.save();
   ctx.textAlign = 'center';
-  ctx.fillStyle = 'rgba(43, 26, 18, 0.55)';
+  ctx.fillStyle = 'rgba(10, 16, 10, 0.6)';
   ctx.beginPath();
   ctx.roundRect(140, 60, 1000, 250, 20);
   ctx.fill();
-  ctx.fillStyle = '#ffd700';
-  ctx.font = 'bold 30px "Trebuchet MS", sans-serif';
-  ctx.fillText('THANKSGIVING IS COMING...', 640, 112);
-  ctx.fillStyle = '#f7e8c9';
-  ctx.font = 'bold 74px "Trebuchet MS", sans-serif';
-  ctx.fillText('THE GREAT', 640, 190);
-  ctx.fillStyle = '#ff7814';
-  ctx.font = 'bold 84px "Trebuchet MS", sans-serif';
-  ctx.fillText('GOBBLE ESCAPE', 640, 272);
+  ctx.fillStyle = '#8be06a';
+  ctx.font = 'bold 30px Georgia, serif';
+  ctx.fillText('THANKSGIVING IS COMING... THE DEAD ARE HUNGRY', 640, 112);
+  ctx.fillStyle = '#d8e8c8';
+  ctx.font = 'bold 74px Georgia, serif';
+  ctx.fillText('ZOMBIE TURKEY', 640, 190);
+  ctx.fillStyle = '#8be06a';
+  ctx.font = 'bold 84px Georgia, serif';
+  ctx.fillText('ESCAPE RUN', 640, 272);
   ctx.restore();
 
   ctx.save();
   ctx.textAlign = 'center';
-  ctx.fillStyle = '#f7e8c9';
-  ctx.font = 'bold 22px "Trebuchet MS", sans-serif';
-  ctx.fillText('The farmer wants you for dinner. Run through the farmyard,', 640, 380);
-  ctx.fillText('the barn and the kitchen — and make it to the forest gate!', 640, 410);
-  ctx.font = '20px "Trebuchet MS", sans-serif';
-  ctx.fillText('Jump fences & haystacks  •  Slide under swinging knives  •  Grab corn for points', 640, 452);
-  ctx.fillText('Hot-sauce dash smashes hay  •  Hide in bushes to lose the farmer', 640, 482);
+  ctx.fillStyle = '#d8e8c8';
+  ctx.font = 'bold 22px Georgia, serif';
+  ctx.fillText('You rose from the grave — and the zombie farmer wants your brains.', 640, 380);
+  ctx.fillText('Run through the graveyard, the haunted barn and the cursed kitchen!', 640, 410);
+  ctx.font = '20px Georgia, serif';
+  ctx.fillText('Jump tombstones & haystacks  •  Slide under zombie crows & cleavers', 640, 452);
+  ctx.fillText('Brain-corn is worth 100 x combo  •  Smashed chickens RISE AGAIN', 640, 482);
   const blink = Math.floor(game.time * 2) % 2 === 0;
   if (blink) {
     ctx.fillStyle = '#ffd700';
-    ctx.font = 'bold 30px "Trebuchet MS", sans-serif';
+    ctx.font = 'bold 30px Georgia, serif';
     ctx.fillText('PRESS SPACE OR CLICK TO RUN', 640, 560);
   }
-  ctx.fillStyle = 'rgba(247, 232, 201, 0.8)';
-  ctx.font = '18px "Trebuchet MS", sans-serif';
-  ctx.fillText('Arrows / WASD move & slide  •  Space jump  •  Shift dash  •  P pause  •  M mute', 640, 610);
+  ctx.fillStyle = 'rgba(216, 232, 200, 0.8)';
+  ctx.font = '18px Georgia, serif';
+  ctx.fillText('Arrows / WASD move & slide  •  Space jump  •  Shift zombie dash  •  P pause  •  M mute', 640, 610);
   if (game.best > 0) {
     ctx.fillStyle = '#ffd700';
-    ctx.font = 'bold 20px "Trebuchet MS", sans-serif';
+    ctx.font = 'bold 20px Georgia, serif';
     ctx.fillText(`BEST SCORE: ${game.best}`, 640, 648);
   }
   ctx.restore();
@@ -376,31 +450,31 @@ function drawTitleScreen() {
 
 function drawEndScreen(escaped) {
   ctx.save();
-  ctx.fillStyle = escaped ? 'rgba(20, 60, 20, 0.55)' : 'rgba(60, 10, 5, 0.6)';
+  ctx.fillStyle = escaped ? 'rgba(16, 50, 16, 0.55)' : 'rgba(50, 8, 8, 0.6)';
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
   ctx.textAlign = 'center';
-  ctx.fillStyle = escaped ? '#a8e063' : '#ff6b5e';
-  ctx.font = 'bold 88px "Trebuchet MS", sans-serif';
+  ctx.fillStyle = escaped ? '#8be06a' : '#ff6b5e';
+  ctx.font = 'bold 88px Georgia, serif';
   ctx.fillText(escaped ? 'ESCAPED!' : 'CAUGHT!', 640, 250);
-  ctx.fillStyle = '#f7e8c9';
-  ctx.font = 'bold 26px "Trebuchet MS", sans-serif';
+  ctx.fillStyle = '#d8e8c8';
+  ctx.font = 'bold 26px Georgia, serif';
   ctx.fillText(
     escaped
-      ? 'You outran the farmer and reached the Freedom Forest!'
-      : `The farmer grabbed you at ${Math.floor(game.distance)} m — dinner is served...`,
+      ? 'You outran the zombie farmer and reached the Freedom Forest!'
+      : `The zombie farmer grabbed you at ${Math.floor(game.distance)} m — brains for dinner...`,
     640, 310,
   );
-  ctx.font = '24px "Trebuchet MS", sans-serif';
-  ctx.fillText(`SCORE  ${Math.floor(game.score)}    •    CORN  ${game.corn}    •    DISTANCE  ${Math.floor(game.distance)} m`, 640, 360);
+  ctx.font = '24px Georgia, serif';
+  ctx.fillText(`SCORE  ${Math.floor(game.score)}    •    CORN  ${game.corn}    •    BRAINS  ${game.brains}    •    DISTANCE  ${Math.floor(game.distance)} m`, 640, 360);
   if (game.best > 0) {
     ctx.fillStyle = '#ffd700';
-    ctx.font = 'bold 22px "Trebuchet MS", sans-serif';
+    ctx.font = 'bold 22px Georgia, serif';
     ctx.fillText(`BEST SCORE: ${game.best}`, 640, 400);
   }
   const blink = Math.floor(game.time * 2) % 2 === 0;
   if (blink) {
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 30px "Trebuchet MS", sans-serif';
+    ctx.font = 'bold 30px Georgia, serif';
     ctx.fillText('PRESS R OR CLICK TO RUN AGAIN', 640, 480);
   }
   ctx.restore();
@@ -424,10 +498,10 @@ function draw() {
     if (ob.kind === 'bush') drawObstacle(ctx, ob, game.time);
   }
   for (const ob of game.obstacles) {
-    if (ob.kind === 'corn' || ob.kind === 'goldenCorn' || ob.kind === 'hotSauce') drawObstacle(ctx, ob, game.time);
+    if (ob.kind === 'corn' || ob.kind === 'goldenCorn' || ob.kind === 'brainCorn' || ob.kind === 'hotSauce') drawObstacle(ctx, ob, game.time);
   }
   for (const ob of game.obstacles) {
-    if (ob.kind !== 'bush' && ob.kind !== 'corn' && ob.kind !== 'goldenCorn' && ob.kind !== 'hotSauce') {
+    if (ob.kind !== 'bush' && ob.kind !== 'corn' && ob.kind !== 'goldenCorn' && ob.kind !== 'brainCorn' && ob.kind !== 'hotSauce') {
       drawObstacle(ctx, ob, game.time);
     }
   }
@@ -436,33 +510,36 @@ function draw() {
   game.turkey.draw(ctx, game.time);
   game.particles.draw(ctx);
 
+  // The night fog closes in around the turkey (not on the title screen).
+  drawFog(ctx, game.turkey.x, game.turkey.y, WIDTH, HEIGHT);
+
   // Stage banner.
   if (game.bannerTime > 0 && game.stageBanner) {
     const alpha = Math.min(1, game.bannerTime);
     ctx.save();
     ctx.globalAlpha = alpha;
     ctx.textAlign = 'center';
-    ctx.fillStyle = 'rgba(43, 26, 18, 0.75)';
+    ctx.fillStyle = 'rgba(10, 16, 10, 0.8)';
     ctx.beginPath();
     ctx.roundRect(340, 150, 600, 96, 14);
     ctx.fill();
-    ctx.fillStyle = '#ffd700';
-    ctx.font = 'bold 40px "Trebuchet MS", sans-serif';
+    ctx.fillStyle = '#8be06a';
+    ctx.font = 'bold 40px Georgia, serif';
     ctx.fillText(game.stageBanner.text, 640, 196);
-    ctx.fillStyle = '#f7e8c9';
-    ctx.font = '20px "Trebuchet MS", sans-serif';
+    ctx.fillStyle = '#d8e8c8';
+    ctx.font = '20px Georgia, serif';
     ctx.fillText(game.stageBanner.sub, 640, 226);
     ctx.restore();
   }
 
-  // Flash text (OUCH!, SMASHED THROUGH!, ...).
+  // Flash text (OUCH!, SMASHED!, BRAIN-CORN!, ...).
   if (game.flashTime > 0 && game.flashText) {
     ctx.save();
     ctx.globalAlpha = Math.min(1, game.flashTime * 2);
     ctx.textAlign = 'center';
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 34px "Trebuchet MS", sans-serif';
-    ctx.strokeStyle = 'rgba(43,26,18,0.8)';
+    ctx.font = 'bold 34px Georgia, serif';
+    ctx.strokeStyle = 'rgba(10,16,10,0.85)';
     ctx.lineWidth = 6;
     ctx.strokeText(game.flashText, 640, 330);
     ctx.fillText(game.flashText, 640, 330);
@@ -473,7 +550,9 @@ function draw() {
     drawHud(ctx, {
       score: Math.floor(game.score),
       corn: game.corn,
+      brains: game.brains,
       combo: game.combo,
+      comboTime: game.comboTimer,
       hearts: game.hearts,
       stageName: currentStage().name,
       distance: game.distance,
@@ -483,13 +562,13 @@ function draw() {
     }, WIDTH);
     if (game.paused) {
       ctx.save();
-      ctx.fillStyle = 'rgba(20, 20, 20, 0.55)';
+      ctx.fillStyle = 'rgba(10, 16, 10, 0.6)';
       ctx.fillRect(0, 0, WIDTH, HEIGHT);
       ctx.textAlign = 'center';
-      ctx.fillStyle = '#f7e8c9';
-      ctx.font = 'bold 64px "Trebuchet MS", sans-serif';
+      ctx.fillStyle = '#d8e8c8';
+      ctx.font = 'bold 64px Georgia, serif';
       ctx.fillText('PAUSED', 640, 340);
-      ctx.font = '24px "Trebuchet MS", sans-serif';
+      ctx.font = '24px Georgia, serif';
       ctx.fillText('Press P to keep running', 640, 390);
       ctx.restore();
     }

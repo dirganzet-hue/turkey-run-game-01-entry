@@ -1,6 +1,8 @@
-// Farmer — the chaser. He never stops coming: every stumble lets him close
-// the gap, every clean stretch lets the turkey pull away. When the gap hits
-// zero he grabs the bird and the run ends.
+// Farmer — the chaser, now a zombie farmer. Green skin, torn overalls,
+// a tattered straw hat, glowing red eyes and a pitchfork he drags behind
+// him. He never stops coming: every stumble lets him close the gap, every
+// clean stretch lets the turkey pull away. When the gap hits zero he
+// grabs the bird and the run ends. He wants brains now.
 
 export class Farmer {
   constructor() {
@@ -46,8 +48,9 @@ export class Farmer {
       this.searchTime -= dt;
       if (this.searchTime <= 0) this.searching = false;
     }
-    // He slowly gains while the turkey runs normally, faster when the
-    // turkey is hurt; a dashing turkey pulls away.
+    // He slowly gains while the turkey runs normally; a dashing turkey
+    // pulls away. He drags one leg, so he is a little slower than the
+    // living farmer was.
     if (turkeyDashing) {
       this.gap = Math.min(330, this.gap + 26 * dt);
     } else if (!this.searching) {
@@ -57,63 +60,81 @@ export class Farmer {
 
   draw(ctx, turkeyX, groundY, t) {
     const x = turkeyX - this.gap;
-    if (x < -90) return; // off the left edge: only his shouts reach you
+    if (x < -90) return; // off the left edge: only his moans reach you
     const legSwing = this.searching ? 0 : Math.sin(this.runPhase) * 12;
     const bob = this.searching ? 0 : Math.abs(Math.sin(this.runPhase)) * -3;
 
     ctx.save();
     ctx.translate(x, groundY);
 
-    // Straw hat.
-    ctx.fillStyle = '#e8c15a';
+    // Tattered straw hat, tilted.
+    ctx.save();
+    ctx.translate(0, -96 + bob);
+    ctx.rotate(-0.12);
+    ctx.fillStyle = '#b89a4a';
     ctx.beginPath();
-    ctx.ellipse(0, -96 + bob, 30, 7, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, 30, 7, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#d9a441';
+    ctx.fillStyle = '#a8873a';
     ctx.beginPath();
-    ctx.ellipse(0, -102 + bob, 17, 10, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, -6, 17, 10, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#8b5a2b';
-    ctx.fillRect(-17, -100 + bob, 34, 4);
+    ctx.fillStyle = '#0c1410';
+    ctx.beginPath();
+    ctx.arc(10, -4, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
 
-    // Head: red nose, big moustache, angry brows.
-    ctx.fillStyle = '#f0c297';
+    // Head: green skin, glowing red eyes, stitches, bared teeth.
+    ctx.fillStyle = '#6a8f4e';
     ctx.beginPath();
     ctx.arc(0, -84 + bob, 13, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#c0392b';
+    ctx.fillStyle = '#5a7a42';
     ctx.beginPath();
-    ctx.arc(12, -82 + bob, 3.5, 0, Math.PI * 2);
+    ctx.ellipse(0, -74 + bob, 12, 5, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#5a3a1e';
+    // Glowing eyes.
+    ctx.save();
+    ctx.shadowColor = '#ff3b30';
+    ctx.shadowBlur = 9;
+    ctx.fillStyle = '#ff6b5e';
     ctx.beginPath();
-    ctx.ellipse(2, -76 + bob, 12, 4, 0, 0, Math.PI * 2);
+    ctx.arc(-5, -87 + bob, 3, 0, Math.PI * 2);
+    ctx.arc(5, -87 + bob, 3, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = '#5a3a1e';
-    ctx.lineWidth = 3;
+    ctx.restore();
+    ctx.fillStyle = '#0c1410';
     ctx.beginPath();
-    ctx.moveTo(-9, -90 + bob);
-    ctx.lineTo(-2, -87 + bob);
-    ctx.moveTo(9, -90 + bob);
-    ctx.lineTo(2, -87 + bob);
+    ctx.arc(-5, -87 + bob, 1.3, 0, Math.PI * 2);
+    ctx.arc(5, -87 + bob, 1.3, 0, Math.PI * 2);
+    ctx.fill();
+    // Stitch across the forehead.
+    ctx.strokeStyle = '#2c3d22';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-8, -96 + bob);
+    ctx.lineTo(-2, -91 + bob);
+    ctx.moveTo(-2, -96 + bob);
+    ctx.lineTo(-8, -91 + bob);
     ctx.stroke();
-    ctx.fillStyle = '#ffffff';
+    // Open moaning mouth.
+    ctx.fillStyle = '#1e2b18';
     ctx.beginPath();
-    ctx.arc(-5, -87 + bob, 2.5, 0, Math.PI * 2);
-    ctx.arc(5, -87 + bob, 2.5, 0, Math.PI * 2);
+    ctx.ellipse(2, -76 + bob, 5, 3.5, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#1a1a1a';
+    // Beard stubble, grey-green.
+    ctx.fillStyle = '#8a9a7a';
     ctx.beginPath();
-    ctx.arc(-4, -87 + bob, 1.2, 0, Math.PI * 2);
-    ctx.arc(6, -87 + bob, 1.2, 0, Math.PI * 2);
+    ctx.ellipse(0, -70 + bob, 8, 3, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Body: red plaid shirt, denim overalls.
-    ctx.fillStyle = '#b03a2e';
+    // Body: torn red plaid shirt, ripped denim overalls.
+    ctx.fillStyle = '#8a2f2f';
     ctx.beginPath();
     ctx.ellipse(0, -52 + bob, 24, 22, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = '#7b241c';
+    ctx.strokeStyle = '#5a1f1f';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(-20, -62 + bob);
@@ -121,38 +142,45 @@ export class Farmer {
     ctx.moveTo(-22, -48 + bob);
     ctx.lineTo(22, -48 + bob);
     ctx.stroke();
-    ctx.fillStyle = '#3a6ea5';
+    ctx.fillStyle = '#0c1410';
+    ctx.beginPath();
+    ctx.moveTo(14, -60 + bob);
+    ctx.lineTo(20, -52 + bob);
+    ctx.lineTo(12, -50 + bob);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#2c4a6b';
     ctx.fillRect(-16, -46 + bob, 32, 22);
-    ctx.fillStyle = '#2c5282';
+    ctx.fillStyle = '#1e3648';
     ctx.fillRect(-16, -46 + bob, 6, 22);
     ctx.fillRect(10, -46 + bob, 6, 22);
 
-    // Legs, pumping.
-    ctx.strokeStyle = '#2c5282';
+    // Legs: one pumping, one dragging stiff behind him.
+    ctx.strokeStyle = '#2c4a6b';
     ctx.lineWidth = 7;
     ctx.lineCap = 'round';
     ctx.beginPath();
     ctx.moveTo(-8, -26);
     ctx.lineTo(-8 + legSwing, 0);
     ctx.moveTo(8, -26);
-    ctx.lineTo(8 - legSwing, 0);
+    ctx.lineTo(14, 0);
     ctx.stroke();
-    ctx.fillStyle = '#5a3a1e';
+    ctx.fillStyle = '#3d3a2a';
     ctx.fillRect(-14 + legSwing - 4, -5, 14, 6);
-    ctx.fillRect(2 - legSwing, -5, 14, 6);
+    ctx.fillRect(10, -5, 14, 6);
 
-    // Pitchfork held high, waving.
+    // Pitchfork dragged behind, tines sparking faintly.
     const wave = this.searching ? Math.sin(t * 6) * 0.3 : Math.sin(this.runPhase) * 0.08;
     ctx.save();
     ctx.translate(24, -60 + bob);
     ctx.rotate(0.5 + wave);
-    ctx.strokeStyle = '#8b5a2b';
+    ctx.strokeStyle = '#6b4a24';
     ctx.lineWidth = 4;
     ctx.beginPath();
     ctx.moveTo(0, 30);
     ctx.lineTo(0, -34);
     ctx.stroke();
-    ctx.strokeStyle = '#c0c0c0';
+    ctx.strokeStyle = '#8a9a9a';
     ctx.lineWidth = 3;
     for (const dx of [-8, 0, 8]) {
       ctx.beginPath();
@@ -164,22 +192,22 @@ export class Farmer {
 
     ctx.restore();
 
-    // Shout bubble when he is close or has just been dodged.
+    // Moan bubble when he is close or has just been dodged.
     if (this.gap < 150 || this.grumble > 0) {
-      const text = this.searching ? "WHERE'D IT GO?!" : this.grumble > 0 ? 'HEY! COME BACK!' : 'GOBBLE GOBBLE... GOTCHA!';
+      const text = this.searching ? "WHERE'D IT GO?!" : this.grumble > 0 ? 'HEY! COME BACK!' : 'BRAAAINS!';
       ctx.save();
-      ctx.font = 'bold 15px "Trebuchet MS", sans-serif';
+      ctx.font = 'bold 15px Georgia, serif';
       const w = ctx.measureText(text).width + 18;
       const bx = Math.max(8, x - w / 2);
       const by = groundY - 150;
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-      ctx.strokeStyle = '#7a4a21';
+      ctx.fillStyle = 'rgba(20, 30, 16, 0.95)';
+      ctx.strokeStyle = '#8be06a';
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.roundRect(bx, by, w, 26, 8);
       ctx.fill();
       ctx.stroke();
-      ctx.fillStyle = '#7a2e0e';
+      ctx.fillStyle = '#d8e8c8';
       ctx.fillText(text, bx + 9, by + 18);
       ctx.restore();
     }

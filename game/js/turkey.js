@@ -1,6 +1,7 @@
-// Turkey — the player. A plump brown bird with a fanned tail, drawn entirely
-// with canvas paths. Handles running, jumping, sliding, dashing and lateral
-// movement, and reports the hitbox the world collides against.
+// Turkey — the player, now a zombie turkey. Green skin, glowing eyes,
+// a tattered tail fan and stitches across the face. Same physics as the
+// living bird (it still runs, jumps, slides and dashes), drawn entirely
+// with canvas paths. y is the FEET position; the ground is 600.
 
 export const TURKEY_HOME_X = 230;
 export const TURKEY_MIN_X = 120;
@@ -55,7 +56,7 @@ export class Turkey {
     if (this.dashCooldown > 0) this.dashCooldown -= dt;
     if (this.squash > 0) this.squash -= dt * 4;
 
-    // Lateral shuffle: dodge falling knives, line up corn.
+    // Lateral shuffle: dodge falling cleavers, line up brain-corn.
     const lateral = 340 * dt;
     if (input.held.left) this.x = Math.max(TURKEY_MIN_X, this.x - lateral);
     if (input.held.right) this.x = Math.min(TURKEY_MAX_X, this.x + lateral);
@@ -63,7 +64,7 @@ export class Turkey {
       this.x += (TURKEY_HOME_X - this.x) * Math.min(1, dt * 1.5);
     }
 
-    // Slide: hold Down on the ground to duck under swinging knives.
+    // Slide: hold Down on the ground to duck under zombie crows and cleavers.
     const wantSlide = input.held.down && this.onGround;
     if (wantSlide && !this.sliding) {
       this.sliding = true;
@@ -109,8 +110,8 @@ export class Turkey {
     const legSwing = this.onGround && !this.sliding ? Math.sin(this.runPhase) * 10 : 0;
     const bodyBob = this.onGround && !this.sliding ? Math.abs(Math.sin(this.runPhase)) * -3 : 0;
 
-    // Tail fan: five autumn feathers fanning behind.
-    const featherColors = ['#c1440e', '#e2701d', '#f2a541', '#8b5a2b', '#d95f02'];
+    // Tattered tail fan: five ragged green feathers with bites taken out.
+    const featherColors = ['#5a7a42', '#6b8f4e', '#4c6b38', '#7da05a', '#556f3c'];
     ctx.save();
     ctx.translate(-26, -46 + bodyBob);
     for (let i = 0; i < 5; i++) {
@@ -121,16 +122,16 @@ export class Turkey {
       ctx.beginPath();
       ctx.ellipse(0, -26, 9, 26, 0, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = '#f7e8c9';
+      ctx.fillStyle = '#0c1410';
       ctx.beginPath();
-      ctx.ellipse(0, -40, 3.5, 9, 0, 0, Math.PI * 2);
+      ctx.arc(4, -34, 4, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
     }
     ctx.restore();
 
-    // Legs, mid-stride.
-    ctx.strokeStyle = '#e2701d';
+    // Legs, mid-shamble.
+    ctx.strokeStyle = '#3d5228';
     ctx.lineWidth = 5;
     ctx.lineCap = 'round';
     ctx.beginPath();
@@ -139,28 +140,32 @@ export class Turkey {
     ctx.moveTo(8, -14);
     ctx.lineTo(8 - legSwing, 0);
     ctx.stroke();
+    // Bone-white feet.
+    ctx.fillStyle = '#e8e0c8';
+    ctx.fillRect(-12 + legSwing, -4, 9, 4);
+    ctx.fillRect(4 - legSwing, -4, 9, 4);
 
-    // Body: a plump brown oval.
-    ctx.fillStyle = '#6b4423';
+    // Body: a plump rotten-green oval.
+    ctx.fillStyle = '#7da05a';
     ctx.beginPath();
     ctx.ellipse(0, -34 + bodyBob, 30, 24, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#8b5a2b';
+    ctx.fillStyle = '#b8c98a';
     ctx.beginPath();
     ctx.ellipse(4, -30 + bodyBob, 22, 17, 0, 0, Math.PI * 2);
     ctx.fill();
 
     if (this.sliding) {
-      // Low duck: head tucked forward, wings spread low.
-      ctx.fillStyle = '#5a3a1e';
+      // Low slide: head tucked forward, wings spread low.
+      ctx.fillStyle = '#5a7a42';
       ctx.beginPath();
       ctx.ellipse(18, -30 + bodyBob, 20, 9, -0.25, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = '#e8b04b';
+      ctx.fillStyle = '#b8c98a';
       ctx.beginPath();
       ctx.ellipse(34, -26 + bodyBob, 10, 6, 0, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = '#d95f02';
+      ctx.fillStyle = '#e8e0c8';
       ctx.beginPath();
       ctx.moveTo(42, -28 + bodyBob);
       ctx.lineTo(56, -24 + bodyBob);
@@ -168,68 +173,87 @@ export class Turkey {
       ctx.closePath();
       ctx.fill();
     } else {
-      // Wing, flapping on the way up.
+      // Wing with stitches, flapping on the way up.
       const flap = this.flapPhase > 0 ? -0.9 * this.flapPhase : Math.sin(this.runPhase) * 0.12;
       ctx.save();
       ctx.translate(-6, -38 + bodyBob);
       ctx.rotate(flap);
-      ctx.fillStyle = '#5a3a1e';
+      ctx.fillStyle = '#5a7a42';
       ctx.beginPath();
       ctx.ellipse(-8, -2, 16, 9, -0.5, 0, Math.PI * 2);
       ctx.fill();
+      ctx.strokeStyle = '#2c3d22';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(-14, -8);
+      ctx.lineTo(-8, 0);
+      ctx.moveTo(-6, -8);
+      ctx.lineTo(0, 0);
+      ctx.stroke();
       ctx.restore();
 
       // Neck and head.
-      ctx.fillStyle = '#6b4423';
+      ctx.fillStyle = '#7da05a';
       ctx.beginPath();
       ctx.ellipse(20, -58 + bodyBob, 9, 16, 0.25, 0, Math.PI * 2);
       ctx.fill();
       // Head.
-      ctx.fillStyle = '#e8b04b';
+      ctx.fillStyle = '#7da05a';
       ctx.beginPath();
       ctx.arc(26, -72 + bodyBob, 11, 0, Math.PI * 2);
       ctx.fill();
-      // Beak.
-      ctx.fillStyle = '#e2701d';
+      // Bone patch on the skull.
+      ctx.fillStyle = '#e8e0c8';
+      ctx.beginPath();
+      ctx.arc(22, -79 + bodyBob, 4, 0, Math.PI * 2);
+      ctx.fill();
+      // Beak, bone-white.
+      ctx.fillStyle = '#e8e0c8';
       ctx.beginPath();
       ctx.moveTo(34, -75 + bodyBob);
       ctx.lineTo(46, -70 + bodyBob);
       ctx.lineTo(34, -67 + bodyBob);
       ctx.closePath();
       ctx.fill();
-      // Wattle.
-      ctx.fillStyle = '#c0392b';
+      // Dark wattle.
+      ctx.fillStyle = '#8a2f2f';
       ctx.beginPath();
       ctx.ellipse(33, -62 + bodyBob, 4, 7, 0.3, 0, Math.PI * 2);
       ctx.fill();
-      // Eye, wide with panic.
-      ctx.fillStyle = '#ffffff';
+      // Glowing eye.
+      ctx.save();
+      ctx.shadowColor = '#d8ff5a';
+      ctx.shadowBlur = 10;
+      ctx.fillStyle = '#eaff7a';
       ctx.beginPath();
       ctx.arc(29, -76 + bodyBob, 4, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = '#1a1a1a';
+      ctx.restore();
+      ctx.fillStyle = '#0c1410';
       ctx.beginPath();
-      ctx.arc(30.5, -76 + bodyBob, 2, 0, Math.PI * 2);
+      ctx.arc(30.5, -76 + bodyBob, 1.8, 0, Math.PI * 2);
       ctx.fill();
-      // Snood.
-      ctx.strokeStyle = '#c0392b';
-      ctx.lineWidth = 2.5;
+      // Stitch across the face.
+      ctx.strokeStyle = '#2c3d22';
+      ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.moveTo(28, -70 + bodyBob);
-      ctx.quadraticCurveTo(30, -62 + bodyBob, 27, -58 + bodyBob);
+      ctx.moveTo(16, -80 + bodyBob);
+      ctx.lineTo(22, -74 + bodyBob);
+      ctx.moveTo(22, -80 + bodyBob);
+      ctx.lineTo(16, -74 + bodyBob);
       ctx.stroke();
     }
 
     ctx.restore();
     ctx.globalAlpha = 1;
 
-    // Dash speed lines.
+    // Dash speed lines, sickly green.
     if (this.dashing) {
-      ctx.strokeStyle = 'rgba(255, 120, 20, 0.7)';
+      ctx.strokeStyle = 'rgba(139, 224, 106, 0.8)';
       ctx.lineWidth = 3;
       for (let i = 0; i < 3; i++) {
         const yy = this.y - 20 - i * 16;
-        const xx = this.x - 44 - (t * 900 + i * 53) % 60;
+        const xx = this.x - 44 - ((t * 900 + i * 53) % 60);
         ctx.beginPath();
         ctx.moveTo(xx, yy);
         ctx.lineTo(xx + 34, yy);

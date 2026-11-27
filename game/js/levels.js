@@ -1,6 +1,6 @@
-// Levels — three stages of the escape, each harder than the last:
-// the Farmyard, the Barn, and the Kitchen. Each stage names its palette,
-// its speed, and which dangers it spawns.
+// Levels — three stages of the zombie escape, each harder than the last:
+// the Graveyard, the Haunted Barn, and the Cursed Kitchen. Each stage
+// names its night palette, its speed, and which dangers it spawns.
 
 export const STAGE_LENGTH = 600; // metres per stage
 export const STAGE_COUNT = 3;
@@ -8,37 +8,37 @@ export const ESCAPE_DISTANCE = STAGE_LENGTH * STAGE_COUNT;
 
 export const STAGES = [
   {
-    name: 'FARMYARD',
-    subtitle: 'Run, Gobbler, run!',
-    skyTop: '#f7b733',
-    skyBottom: '#f2a541',
-    ground: '#b07f2a',
-    groundDark: '#8a6420',
+    name: 'GRAVEYARD',
+    subtitle: 'The dead run at night...',
+    skyTop: '#0a1626',
+    skyBottom: '#1d3a2a',
+    ground: '#2c3d22',
+    groundDark: '#1e2b18',
     speed: 380,
     spawnGap: [420, 700],
-    weights: { fence: 5, haystack: 4, corn: 6, goldenCorn: 1, hotSauce: 1, bush: 3, swingKnife: 0, fallingKnife: 0, oven: 0 },
+    weights: { tombstone: 5, fence: 3, zombieCrow: 3, zombieChicken: 3, haystack: 2, corn: 5, goldenCorn: 1, brainCorn: 1, hotSauce: 1, bush: 3, swingKnife: 0, fallingKnife: 0, oven: 0 },
   },
   {
-    name: 'THE BARN',
-    subtitle: 'Knives swing in the dark...',
-    skyTop: '#8a5a3b',
-    skyBottom: '#c98a4b',
-    ground: '#6b4423',
-    groundDark: '#54341a',
+    name: 'HAUNTED BARN',
+    subtitle: 'Something swings in the dark...',
+    skyTop: '#120a1e',
+    skyBottom: '#3a2430',
+    ground: '#3a2a1e',
+    groundDark: '#2a1e16',
     speed: 460,
     spawnGap: [380, 620],
-    weights: { fence: 4, haystack: 3, corn: 5, goldenCorn: 1, hotSauce: 1, bush: 2, swingKnife: 4, fallingKnife: 0, oven: 0 },
+    weights: { tombstone: 3, fence: 3, haystack: 2, corn: 4, goldenCorn: 1, brainCorn: 1, hotSauce: 1, bush: 2, swingKnife: 4, zombieCrow: 3, zombieChicken: 2, fallingKnife: 1, oven: 0 },
   },
   {
-    name: 'THE KITCHEN',
-    subtitle: 'The oven is lit. Do NOT get cooked!',
-    skyTop: '#5a3a3a',
-    skyBottom: '#a06a3b',
-    ground: '#7a6a5a',
-    groundDark: '#5d5044',
+    name: 'CURSED KITCHEN',
+    subtitle: 'The cauldron bubbles. Do NOT get cooked!',
+    skyTop: '#160a12',
+    skyBottom: '#3d1e2a',
+    ground: '#2e2a26',
+    groundDark: '#211d1a',
     speed: 540,
     spawnGap: [340, 560],
-    weights: { fence: 2, haystack: 2, corn: 4, goldenCorn: 1, hotSauce: 2, bush: 0, swingKnife: 3, fallingKnife: 4, oven: 4 },
+    weights: { tombstone: 1, fence: 2, haystack: 2, corn: 3, goldenCorn: 1, brainCorn: 2, hotSauce: 2, bush: 0, swingKnife: 3, fallingKnife: 4, oven: 4, zombieCrow: 2, zombieChicken: 1 },
   },
 ];
 
