@@ -10,7 +10,7 @@ export function makeFence(x, groundY) {
 }
 
 export function makeTombstone(x, groundY) {
-  return { kind: 'tombstone', x, y: groundY - 44, w: 40, h: 44, passed: false };
+  return { kind: 'tombstone', x, y: groundY - 44, w: 40, h: 44, ep: Math.floor(Math.random() * 4), passed: false };
 }
 
 export function makeHaystack(x, groundY) {
@@ -210,11 +210,12 @@ function drawTombstone(ctx, ob) {
   ctx.ellipse(8, ob.h - 4, 9, 5, 0, 0, Math.PI * 2);
   ctx.ellipse(ob.w - 10, ob.h - 8, 7, 4, 0, 0, Math.PI * 2);
   ctx.fill();
-  // RIP.
+  // A funny epitaph, picked once when the stone spawns.
+  const epitaphs = ['RIP', 'OOPS', 'LOL', 'EEK'];
   ctx.fillStyle = '#3d4038';
   ctx.font = 'bold 11px Georgia, serif';
   ctx.textAlign = 'center';
-  ctx.fillText('RIP', ob.w / 2, 26);
+  ctx.fillText(epitaphs[ob.ep || 0], ob.w / 2, 26);
   // A crack down the stone.
   ctx.strokeStyle = '#3d4038';
   ctx.lineWidth = 1.5;
@@ -251,11 +252,17 @@ function drawHaystack(ctx, ob) {
   ctx.beginPath();
   ctx.arc(ob.x + ob.w / 2, ob.y + 16, 5, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = '#0c1410';
-  ctx.beginPath();
-  ctx.arc(ob.x + ob.w / 2 - 2, ob.y + 15, 1.2, 0, Math.PI * 2);
-  ctx.arc(ob.x + ob.w / 2 + 2, ob.y + 15, 1.2, 0, Math.PI * 2);
-  ctx.fill();
+  // X eyes: this little skull is very dead, and very confused about it.
+  ctx.strokeStyle = '#0c1410';
+  ctx.lineWidth = 1.2;
+  for (const ex of [ob.x + ob.w / 2 - 2, ob.x + ob.w / 2 + 2]) {
+    ctx.beginPath();
+    ctx.moveTo(ex - 1.2, ob.y + 13.8);
+    ctx.lineTo(ex + 1.2, ob.y + 16.2);
+    ctx.moveTo(ex + 1.2, ob.y + 13.8);
+    ctx.lineTo(ex - 1.2, ob.y + 16.2);
+    ctx.stroke();
+  }
 }
 
 function drawZombieCrow(ctx, ob) {
@@ -282,26 +289,40 @@ function drawZombieCrow(ctx, ob) {
   ctx.beginPath();
   ctx.ellipse(0, 0, 18, 10, 0, 0, Math.PI * 2);
   ctx.fill();
-  // Head and beak.
+  // Head and beak, open in a squawk.
   ctx.beginPath();
   ctx.arc(14, -6, 7, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillStyle = '#c8b060';
   ctx.beginPath();
-  ctx.moveTo(20, -8);
+  ctx.moveTo(20, -9);
   ctx.lineTo(30, -5);
-  ctx.lineTo(20, -3);
+  ctx.lineTo(20, -4);
   ctx.closePath();
   ctx.fill();
-  // Glowing red eye.
-  ctx.save();
-  ctx.shadowColor = '#ff3b30';
-  ctx.shadowBlur = 8;
-  ctx.fillStyle = '#ff6b5e';
+  ctx.fillStyle = '#8a6a20';
   ctx.beginPath();
-  ctx.arc(15, -8, 2.8, 0, Math.PI * 2);
+  ctx.moveTo(20, -2);
+  ctx.lineTo(27, 0);
+  ctx.lineTo(20, 1);
+  ctx.closePath();
   ctx.fill();
-  ctx.restore();
+  // Googly eyes: one big, one small, both terrified.
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(13, -8, 3.5, 0, Math.PI * 2);
+  ctx.arc(18, -9, 2.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#0c1410';
+  ctx.beginPath();
+  ctx.arc(14, -8, 1.6, 0, Math.PI * 2);
+  ctx.arc(18.5, -9, 1.1, 0, Math.PI * 2);
+  ctx.fill();
+  // A sweat drop: even the crow is nervous.
+  ctx.fillStyle = 'rgba(140, 200, 255, 0.9)';
+  ctx.beginPath();
+  ctx.arc(8, -14, 2, 0, Math.PI * 2);
+  ctx.fill();
   ctx.restore();
 }
 
@@ -322,11 +343,17 @@ function drawZombieChicken(ctx, ob) {
     ctx.beginPath();
     ctx.arc(ob.x + 22, ob.y + ob.h - 12, 5, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#0c1410';
-    ctx.beginPath();
-    ctx.arc(ob.x + 20, ob.y + ob.h - 13, 1.2, 0, Math.PI * 2);
-    ctx.arc(ob.x + 24, ob.y + ob.h - 13, 1.2, 0, Math.PI * 2);
-    ctx.fill();
+    // X eyes on the skull: dead, but still confused.
+    ctx.strokeStyle = '#0c1410';
+    ctx.lineWidth = 1.2;
+    for (const ex of [ob.x + 20, ob.x + 24]) {
+      ctx.beginPath();
+      ctx.moveTo(ex - 1.4, ob.y + ob.h - 14.4);
+      ctx.lineTo(ex + 1.4, ob.y + ob.h - 11.6);
+      ctx.moveTo(ex + 1.4, ob.y + ob.h - 14.4);
+      ctx.lineTo(ex - 1.4, ob.y + ob.h - 11.6);
+      ctx.stroke();
+    }
     ctx.restore();
     return;
   }
@@ -374,15 +401,26 @@ function drawZombieChicken(ctx, ob) {
   ctx.lineTo(18, -25);
   ctx.closePath();
   ctx.fill();
-  // Glowing eye (brighter once it has risen).
+  // Crossed googly eyes (brighter once it has risen).
   ctx.save();
   ctx.shadowColor = ob.risen ? '#ffd700' : '#ff3b30';
-  ctx.shadowBlur = 8;
-  ctx.fillStyle = ob.risen ? '#ffd700' : '#ff6b5e';
+  ctx.shadowBlur = 6;
+  ctx.fillStyle = '#ffffff';
   ctx.beginPath();
-  ctx.arc(13, -30, 2.6, 0, Math.PI * 2);
+  ctx.arc(10, -31, 3, 0, Math.PI * 2);
+  ctx.arc(16, -31, 2.2, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
+  ctx.fillStyle = '#0c1410';
+  ctx.beginPath();
+  ctx.arc(11.5, -30, 1.4, 0, Math.PI * 2);
+  ctx.arc(14.5, -30, 1.1, 0, Math.PI * 2);
+  ctx.fill();
+  // Sweat drop: this chicken is very confused about being dead.
+  ctx.fillStyle = 'rgba(140, 200, 255, 0.9)';
+  ctx.beginPath();
+  ctx.arc(6, -36, 2, 0, Math.PI * 2);
+  ctx.fill();
   ctx.restore();
 }
 
@@ -470,7 +508,7 @@ function drawOven(ctx, ob, t) {
   ctx.beginPath();
   ctx.arc(ob.x + ob.w / 2, ob.y + 36, 13, 0, Math.PI * 2);
   ctx.fill();
-  // Skull vent on the door.
+  // Skull vent on the door, with googly eyes: one big, one small.
   ctx.fillStyle = '#e8e0c8';
   ctx.beginPath();
   ctx.arc(ob.x + ob.w / 2, ob.y + 30, 6, 0, Math.PI * 2);
@@ -479,8 +517,8 @@ function drawOven(ctx, ob, t) {
   ctx.fillRect(ob.x + ob.w / 2 - 5, ob.y + 34, 10, 4);
   ctx.fillStyle = '#101010';
   ctx.beginPath();
-  ctx.arc(ob.x + ob.w / 2 - 2.5, ob.y + 29, 1.4, 0, Math.PI * 2);
-  ctx.arc(ob.x + ob.w / 2 + 2.5, ob.y + 29, 1.4, 0, Math.PI * 2);
+  ctx.arc(ob.x + ob.w / 2 - 2.5, ob.y + 29, 2.1, 0, Math.PI * 2);
+  ctx.arc(ob.x + ob.w / 2 + 2.5, ob.y + 29, 1.1, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillStyle = '#2b1a12';
   ctx.fillRect(ob.x + 10, ob.y + 66, ob.w - 20, 6);
@@ -569,6 +607,22 @@ function drawBrainCorn(ctx, ob, t) {
   ctx.moveTo(-6, -8);
   ctx.quadraticCurveTo(0, -12, 6, -8);
   ctx.stroke();
+  // A goofy face on the brain: it smiles at you. Then you eat it.
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(-5, -14, 2.5, 0, Math.PI * 2);
+  ctx.arc(5, -14, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#0c1410';
+  ctx.beginPath();
+  ctx.arc(-4, -14, 1.2, 0, Math.PI * 2);
+  ctx.arc(6, -14, 1.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#d95f8a';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(0, -6, 3.5, Math.PI * 0.15, Math.PI * 0.85);
+  ctx.stroke();
   ctx.restore();
 }
 
@@ -599,6 +653,12 @@ function drawHotSauce(ctx, ob, t) {
   ctx.lineTo(ob.x + 9, y + 4);
   ctx.closePath();
   ctx.fill();
+  // Two tiny eyes on the flame: the hot sauce is alive, and it is proud.
+  ctx.fillStyle = '#7a2e0e';
+  ctx.beginPath();
+  ctx.arc(ob.x + 13, y - 1, 1.1, 0, Math.PI * 2);
+  ctx.arc(ob.x + 17, y - 1, 1.1, 0, Math.PI * 2);
+  ctx.fill();
 }
 
 function drawBush(ctx, ob) {
@@ -621,6 +681,17 @@ function drawBush(ctx, ob) {
     ctx.arc(ob.x + bx, ob.y + by, 3, 0, Math.PI * 2);
     ctx.fill();
   }
+  // Two googly eyes peek out of the brambles. The bush is watching you.
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(ob.x + 40, ob.y + 14, 4, 0, Math.PI * 2);
+  ctx.arc(ob.x + 58, ob.y + 14, 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#0c1410';
+  ctx.beginPath();
+  ctx.arc(ob.x + 38.5, ob.y + 14, 1.8, 0, Math.PI * 2);
+  ctx.arc(ob.x + 56.5, ob.y + 14, 1.4, 0, Math.PI * 2);
+  ctx.fill();
   ctx.strokeStyle = '#1e2b18';
   ctx.lineWidth = 2;
   ctx.beginPath();

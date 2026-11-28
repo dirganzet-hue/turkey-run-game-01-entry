@@ -115,6 +115,22 @@ function drawPumpkin(ctx, x, groundY, t) {
   ctx.fill();
   ctx.fillStyle = '#5a7a42';
   ctx.fillRect(-2, -32, 4, 8);
+  // A tiny party hat, like the turkey's. The pumpkin celebrates too.
+  ctx.save();
+  ctx.translate(-4, -30);
+  ctx.rotate(-0.2);
+  ctx.fillStyle = '#9a6bc0';
+  ctx.beginPath();
+  ctx.moveTo(-7, 0);
+  ctx.lineTo(7, 0);
+  ctx.lineTo(0, -14);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#ffd700';
+  ctx.beginPath();
+  ctx.arc(0, -15, 2.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
   // Glowing jack-o-lantern face.
   ctx.fillStyle = `rgba(255, 220, 90, ${flicker})`;
   ctx.beginPath();
@@ -140,7 +156,7 @@ function drawPumpkin(ctx, x, groundY, t) {
   ctx.restore();
 }
 
-function drawTombstoneBg(ctx, x, groundY, scale, tilt) {
+function drawTombstoneBg(ctx, x, groundY, scale, tilt, epitaph) {
   ctx.save();
   ctx.translate(x, groundY);
   ctx.scale(scale, scale);
@@ -152,6 +168,39 @@ function drawTombstoneBg(ctx, x, groundY, scale, tilt) {
   ctx.arc(0, -18, 14, Math.PI, 0);
   ctx.lineTo(14, 0);
   ctx.closePath();
+  ctx.fill();
+  if (epitaph) {
+    ctx.fillStyle = '#3d4038';
+    ctx.font = 'bold 8px Georgia, serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(epitaph, 0, -20);
+    ctx.textAlign = 'left';
+  }
+  ctx.restore();
+}
+
+function drawGhost(ctx, x, y, t) {
+  ctx.save();
+  ctx.translate(x, y + Math.sin(t + x) * 8);
+  ctx.globalAlpha = 0.85;
+  ctx.fillStyle = '#f0f4dc';
+  ctx.beginPath();
+  ctx.moveTo(-16, 10);
+  ctx.lineTo(-16, -12);
+  ctx.arc(0, -12, 16, Math.PI, 0);
+  ctx.lineTo(16, 10);
+  ctx.quadraticCurveTo(8, 4, 0, 10);
+  ctx.quadraticCurveTo(-8, 4, -16, 10);
+  ctx.closePath();
+  ctx.fill();
+  // Crooked eyes: one big, one small. A tiny "o" mouth.
+  ctx.fillStyle = '#0c1410';
+  ctx.beginPath();
+  ctx.arc(-6, -12, 3.5, 0, Math.PI * 2);
+  ctx.arc(6, -13, 2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(0, -2, 2.5, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
 }
@@ -170,11 +219,26 @@ function drawHauntedBarn(ctx, x, groundY, scale, t) {
   ctx.fill();
   ctx.fillStyle = '#1a1216';
   ctx.fillRect(-22, -52, 44, 52);
-  // One glowing window eye.
+  // Two sleepy window eyes: one open, one winking.
   const glow = 0.6 + 0.4 * Math.sin(t * 2 + x);
   ctx.fillStyle = `rgba(255, 200, 80, ${glow})`;
   ctx.beginPath();
-  ctx.arc(0, -104, 8, 0, Math.PI * 2);
+  ctx.arc(-8, -104, 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = `rgba(255, 200, 80, ${glow})`;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(8, -104, 6, Math.PI * 0.15, Math.PI * 0.85);
+  ctx.stroke();
+  // A little ghost peeks over the barn door.
+  ctx.fillStyle = '#f0f4dc';
+  ctx.beginPath();
+  ctx.ellipse(0, -56, 10, 8, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#0c1410';
+  ctx.beginPath();
+  ctx.arc(-3, -58, 1.8, 0, Math.PI * 2);
+  ctx.arc(3, -58, 1.2, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillStyle = `rgba(255, 200, 80, ${glow * 0.7})`;
   ctx.fillRect(-14, -40, 10, 14);
@@ -200,6 +264,26 @@ function drawCauldron(ctx, x, groundY, t) {
     ctx.arc(-14 + i * 14, by, 5 - i, 0, Math.PI * 2);
     ctx.fill();
   }
+  // A rubber duck floats on the brew, looking very confused.
+  const duckBob = Math.sin(t * 3 + x) * 3;
+  ctx.fillStyle = '#ffd700';
+  ctx.beginPath();
+  ctx.ellipse(8, -50 + duckBob, 10, 6, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(15, -56 + duckBob, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#e2701d';
+  ctx.beginPath();
+  ctx.moveTo(19, -57 + duckBob);
+  ctx.lineTo(25, -55 + duckBob);
+  ctx.lineTo(19, -53 + duckBob);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#0c1410';
+  ctx.beginPath();
+  ctx.arc(16, -57 + duckBob, 1.2, 0, Math.PI * 2);
+  ctx.fill();
   ctx.restore();
 }
 
@@ -281,7 +365,11 @@ export function drawBackground(ctx, stage, stageIndex, distance, t, width, heigh
     }
     for (let i = 0; i < 8; i++) {
       const sx = ((i * 260 - distance * 0.7) % 1500 + 1500) % 1500 - 100;
-      drawTombstoneBg(ctx, sx, groundY, 0.9 + (i % 3) * 0.3, (i % 2 ? -0.08 : 0.06));
+      drawTombstoneBg(ctx, sx, groundY, 0.9 + (i % 3) * 0.3, (i % 2 ? -0.08 : 0.06), i % 3 === 0 ? 'OOPS' : null);
+    }
+    for (let i = 0; i < 2; i++) {
+      const gx = ((i * 700 - distance * 0.45) % 1500 + 1500) % 1500 - 100;
+      drawGhost(ctx, gx, 240 + i * 60, t);
     }
     for (let i = 0; i < 3; i++) {
       const px = ((i * 520 - distance * 0.6) % 1500 + 1500) % 1500 - 100;
@@ -461,7 +549,7 @@ export function drawHud(ctx, hud, width) {
   ctx.fillStyle = '#d8e8c8';
   ctx.font = 'bold 12px Georgia, serif';
   ctx.textAlign = 'left';
-  ctx.fillText('ZOMBIE FARMER', barX + 10, barY - 6);
+  ctx.fillText('GRUMPY FARMER', barX + 10, barY - 6);
   ctx.fillStyle = closeness > 0.66 ? '#ff3b30' : closeness > 0.33 ? '#e2701d' : '#8be06a';
   ctx.beginPath();
   ctx.roundRect(barX + 132, barY - 16, (barW - 144) * closeness, 12, 6);

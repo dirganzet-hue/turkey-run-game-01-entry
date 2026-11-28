@@ -1,7 +1,10 @@
-// Turkey — the player, now a zombie turkey. Green skin, glowing eyes,
-// a tattered tail fan and stitches across the face. Same physics as the
-// living bird (it still runs, jumps, slides and dashes), drawn entirely
-// with canvas paths. y is the FEET position; the ground is 600.
+// Turkey — the player, now a goofy zombie turkey. Green skin, crossed
+// googly eyes, a toothless grin with one tooth, a lolling tongue, a
+// crooked little party hat, a tattered tail fan and stitches across the
+// face — and a tipsy waddle, because the dead still celebrate. Same
+// physics as the living bird (it still runs, jumps, slides and dashes),
+// drawn entirely with canvas paths. y is the FEET position; the ground
+// is 600.
 
 export const TURKEY_HOME_X = 230;
 export const TURKEY_MIN_X = 120;
@@ -104,6 +107,9 @@ export class Turkey {
     ctx.save();
     ctx.translate(this.x, this.y);
     if (this.dashing) ctx.translate(6, 0);
+    // A tipsy waddle: the goofy zombie turkey sways side to side.
+    const wobble = this.onGround && !this.sliding ? Math.sin(this.runPhase) * 0.06 : 0;
+    ctx.rotate(wobble);
     const squashK = this.squash > 0 ? 1 - 0.12 * this.squash : 1;
     ctx.scale(1 / Math.sqrt(squashK), squashK);
 
@@ -220,19 +226,61 @@ export class Turkey {
       ctx.beginPath();
       ctx.ellipse(33, -62 + bodyBob, 4, 7, 0.3, 0, Math.PI * 2);
       ctx.fill();
-      // Glowing eye.
-      ctx.save();
-      ctx.shadowColor = '#d8ff5a';
-      ctx.shadowBlur = 10;
-      ctx.fillStyle = '#eaff7a';
+      // Crossed googly eyes: one big, one small, pupils pointing inward.
+      // While dashing they squeeze shut, happy: WHEEE!
+      if (this.dashing) {
+        ctx.strokeStyle = '#0c1410';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(22, -76 + bodyBob, 3.5, Math.PI * 0.15, Math.PI * 0.85);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(31, -75 + bodyBob, 3, Math.PI * 0.15, Math.PI * 0.85);
+        ctx.stroke();
+      } else {
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(22, -76 + bodyBob, 4.5, 0, Math.PI * 2);
+        ctx.arc(31, -75 + bodyBob, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#0c1410';
+        ctx.beginPath();
+        ctx.arc(24, -75 + bodyBob, 2, 0, Math.PI * 2);
+        ctx.arc(29.5, -74 + bodyBob, 1.4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // Toothless grin: one tooth, a lolling tongue and a drool drop.
+      ctx.strokeStyle = '#2c3d22';
+      ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.arc(29, -76 + bodyBob, 4, 0, Math.PI * 2);
+      ctx.arc(39, -66 + bodyBob, 4.5, Math.PI * 0.15, Math.PI * 0.85);
+      ctx.stroke();
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(37, -67 + bodyBob, 3.5, 4);
+      ctx.fillStyle = '#ff8fa8';
+      ctx.beginPath();
+      ctx.ellipse(43, -57 + bodyBob, 3.5, 5, 0.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#8be06a';
+      ctx.beginPath();
+      ctx.arc(44, -49 + bodyBob, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+      // A crooked little party hat, because the dead still celebrate.
+      ctx.save();
+      ctx.translate(24, -82 + bodyBob);
+      ctx.rotate(-0.25);
+      ctx.fillStyle = '#9a6bc0';
+      ctx.beginPath();
+      ctx.moveTo(-8, 0);
+      ctx.lineTo(8, 0);
+      ctx.lineTo(0, -16);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#ffd700';
+      ctx.beginPath();
+      ctx.arc(0, -17, 2.5, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
-      ctx.fillStyle = '#0c1410';
-      ctx.beginPath();
-      ctx.arc(30.5, -76 + bodyBob, 1.8, 0, Math.PI * 2);
-      ctx.fill();
       // Stitch across the face.
       ctx.strokeStyle = '#2c3d22';
       ctx.lineWidth = 1.5;
@@ -242,6 +290,21 @@ export class Turkey {
       ctx.moveTo(22, -80 + bodyBob);
       ctx.lineTo(16, -74 + bodyBob);
       ctx.stroke();
+    }
+
+    // Dizzy stars circling the head after a hit.
+    if (this.invuln > 0) {
+      ctx.fillStyle = '#ffd700';
+      for (let i = 0; i < 3; i++) {
+        const a = t * 6 + i * 2.1;
+        const sx = 24 + Math.cos(a) * 20;
+        const sy = -88 + bodyBob + Math.sin(a) * 8;
+        ctx.save();
+        ctx.translate(sx, sy);
+        ctx.rotate(a);
+        ctx.fillRect(-3, -3, 6, 6);
+        ctx.restore();
+      }
     }
 
     ctx.restore();

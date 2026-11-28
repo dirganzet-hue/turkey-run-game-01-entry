@@ -1,8 +1,11 @@
-// Farmer — the chaser, now a zombie farmer. Green skin, torn overalls,
-// a tattered straw hat, glowing red eyes and a pitchfork he drags behind
-// him. He never stops coming: every stumble lets him close the gap, every
-// clean stretch lets the turkey pull away. When the gap hits zero he
-// grabs the bird and the run ends. He wants brains now.
+// Farmer — the chaser, now a clumsy zombie farmer. Green skin, torn
+// overalls, a tattered straw hat that pops off when he stumbles, wide
+// panicked eyes, a screaming mouth — and a pitchfork he holds BACKWARDS,
+// tines dragging behind him, because he forgot which end is which. He
+// never stops coming: every stumble lets him close the gap, every clean
+// stretch lets the turkey pull away. When the gap hits zero he grabs the
+// bird and the run ends. He wants brains now. He also shouts very silly
+// things.
 
 export class Farmer {
   constructor() {
@@ -67,10 +70,11 @@ export class Farmer {
     ctx.save();
     ctx.translate(x, groundY);
 
-    // Tattered straw hat, tilted.
+    // Tattered straw hat, tilted — it pops off when he stumbles.
+    const hatPop = this.grumble > 0 ? 14 : 0;
     ctx.save();
-    ctx.translate(0, -96 + bob);
-    ctx.rotate(-0.12);
+    ctx.translate(0, -96 + bob - hatPop);
+    ctx.rotate(-0.12 - (this.grumble > 0 ? 0.3 : 0));
     ctx.fillStyle = '#b89a4a';
     ctx.beginPath();
     ctx.ellipse(0, 0, 30, 7, 0, 0, Math.PI * 2);
@@ -94,21 +98,25 @@ export class Farmer {
     ctx.beginPath();
     ctx.ellipse(0, -74 + bob, 12, 5, 0, 0, Math.PI * 2);
     ctx.fill();
-    // Glowing eyes.
-    ctx.save();
-    ctx.shadowColor = '#ff3b30';
-    ctx.shadowBlur = 9;
-    ctx.fillStyle = '#ff6b5e';
+    // Wide panicked eyes, raised brows, a screaming mouth.
+    ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.arc(-5, -87 + bob, 3, 0, Math.PI * 2);
-    ctx.arc(5, -87 + bob, 3, 0, Math.PI * 2);
+    ctx.arc(-5, -87 + bob, 4, 0, Math.PI * 2);
+    ctx.arc(5, -87 + bob, 4, 0, Math.PI * 2);
     ctx.fill();
-    ctx.restore();
     ctx.fillStyle = '#0c1410';
     ctx.beginPath();
-    ctx.arc(-5, -87 + bob, 1.3, 0, Math.PI * 2);
-    ctx.arc(5, -87 + bob, 1.3, 0, Math.PI * 2);
+    ctx.arc(-4, -87 + bob, 1.5, 0, Math.PI * 2);
+    ctx.arc(4, -87 + bob, 1.5, 0, Math.PI * 2);
     ctx.fill();
+    ctx.strokeStyle = '#2c3d22';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-9, -95 + bob);
+    ctx.quadraticCurveTo(-5, -98 + bob, -1, -95 + bob);
+    ctx.moveTo(1, -95 + bob);
+    ctx.quadraticCurveTo(5, -98 + bob, 9, -95 + bob);
+    ctx.stroke();
     // Stitch across the forehead.
     ctx.strokeStyle = '#2c3d22';
     ctx.lineWidth = 1.5;
@@ -118,16 +126,33 @@ export class Farmer {
     ctx.moveTo(-2, -96 + bob);
     ctx.lineTo(-8, -91 + bob);
     ctx.stroke();
-    // Open moaning mouth.
+    // Open screaming mouth, with a tongue that has given up.
     ctx.fillStyle = '#1e2b18';
     ctx.beginPath();
-    ctx.ellipse(2, -76 + bob, 5, 3.5, 0, 0, Math.PI * 2);
+    ctx.ellipse(2, -75 + bob, 6, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ff8fa8';
+    ctx.beginPath();
+    ctx.ellipse(2, -73 + bob, 3, 1.8, 0, 0, Math.PI * 2);
     ctx.fill();
     // Beard stubble, grey-green.
     ctx.fillStyle = '#8a9a7a';
     ctx.beginPath();
     ctx.ellipse(0, -70 + bob, 8, 3, 0, 0, Math.PI * 2);
     ctx.fill();
+    // Sweat drops: he is always one step from a panic attack.
+    ctx.fillStyle = 'rgba(140, 200, 255, 0.9)';
+    const sweatBob = Math.sin(t * 4) * 2;
+    ctx.beginPath();
+    ctx.arc(-15, -96 + bob + sweatBob, 2.5, 0, Math.PI * 2);
+    ctx.arc(15, -92 + bob - sweatBob, 2, 0, Math.PI * 2);
+    ctx.fill();
+    if (this.grumble > 0) {
+      ctx.beginPath();
+      ctx.arc(-8, -108 + bob, 2.5, 0, Math.PI * 2);
+      ctx.arc(10, -112 + bob, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
     // Body: torn red plaid shirt, ripped denim overalls.
     ctx.fillStyle = '#8a2f2f';
@@ -154,8 +179,16 @@ export class Farmer {
     ctx.fillStyle = '#1e3648';
     ctx.fillRect(-16, -46 + bob, 6, 22);
     ctx.fillRect(10, -46 + bob, 6, 22);
+    // A patch on the overalls that just says "?".
+    ctx.fillStyle = '#3a5a7b';
+    ctx.fillRect(-7, -44 + bob, 10, 10);
+    ctx.fillStyle = '#d8e8c8';
+    ctx.font = 'bold 9px Georgia, serif';
+    ctx.fillText('?', -4, -35 + bob);
 
-    // Legs: one pumping, one dragging stiff behind him.
+    // Legs: one pumping, one dragging stiff behind him — and when he
+    // stumbles, the dragging leg kicks up in the air.
+    const tripKick = this.grumble > 0 ? -12 : 0;
     ctx.strokeStyle = '#2c4a6b';
     ctx.lineWidth = 7;
     ctx.lineCap = 'round';
@@ -163,17 +196,18 @@ export class Farmer {
     ctx.moveTo(-8, -26);
     ctx.lineTo(-8 + legSwing, 0);
     ctx.moveTo(8, -26);
-    ctx.lineTo(14, 0);
+    ctx.lineTo(14, tripKick);
     ctx.stroke();
     ctx.fillStyle = '#3d3a2a';
     ctx.fillRect(-14 + legSwing - 4, -5, 14, 6);
-    ctx.fillRect(10, -5, 14, 6);
+    ctx.fillRect(10, -5 + tripKick, 14, 6);
 
-    // Pitchfork dragged behind, tines sparking faintly.
+    // Pitchfork held BACKWARDS, tines dragging behind him — he forgot
+    // which end is which.
     const wave = this.searching ? Math.sin(t * 6) * 0.3 : Math.sin(this.runPhase) * 0.08;
     ctx.save();
     ctx.translate(24, -60 + bob);
-    ctx.rotate(0.5 + wave);
+    ctx.rotate(2.7 + wave);
     ctx.strokeStyle = '#6b4a24';
     ctx.lineWidth = 4;
     ctx.beginPath();
@@ -192,9 +226,14 @@ export class Farmer {
 
     ctx.restore();
 
-    // Moan bubble when he is close or has just been dodged.
+    // Shout bubble when he is close, has just been dodged, or is lost.
+    // The lines rotate, because he has a lot of feelings about this.
     if (this.gap < 150 || this.grumble > 0) {
-      const text = this.searching ? "WHERE'D IT GO?!" : this.grumble > 0 ? 'HEY! COME BACK!' : 'BRAAAINS!';
+      const CLOSE_LINES = ['BRAAAINS!', 'MY DINNER IS RUNNING!', "I'M TOO OLD FOR THIS!"];
+      const GRUMBLE_LINES = ['HEY! COME BACK!', 'OW! MY TOE!', 'MY HAT!'];
+      const text = this.searching ? "WHERE'D IT GO?! ... PROBABLY THE FRIDGE"
+        : this.grumble > 0 ? GRUMBLE_LINES[Math.floor(t) % GRUMBLE_LINES.length]
+        : CLOSE_LINES[Math.floor(t / 2) % CLOSE_LINES.length];
       ctx.save();
       ctx.font = 'bold 15px Georgia, serif';
       const w = ctx.measureText(text).width + 18;

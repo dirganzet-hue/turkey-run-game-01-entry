@@ -29,6 +29,7 @@ function basePlaying(game, stageDistance, score, corn, hearts) {
   game.particles.list = [];
   game.stageBanner = null;
   game.flashText = null;
+  game.taunt = null;
 }
 
 export function applyShot(game, name) {
@@ -51,13 +52,15 @@ export function applyShot(game, name) {
   }
 
   if (name === 'farm') {
-    // Graveyard gameplay: the zombie turkey leaps toward a tombstone,
-    // brain-corn glows ahead, a zombie crow dives in and a zombie
-    // chicken charges — all inside the moonlit vision circle.
+    // Silly Graveyard gameplay: the goofy zombie turkey leaps toward a
+    // tombstone, brain-corn glows ahead, a zombie crow dives in and a
+    // zombie chicken charges — all inside the moonlit vision circle.
+    // The turkey is mid-taunt: NYAH NYAH!
     basePlaying(game, 142, 1250, 12, 3);
     game.combo = 3;
     game.comboTimer = 2.5;
     game.brains = 2;
+    game.taunt = { text: 'NYAH NYAH!', time: 99 };
     game.turkey.x = 380;
     game.turkey.y = groundY - 96;
     game.turkey.vy = 0;

@@ -1,9 +1,13 @@
 // main — Zombie Turkey Escape Run. Game loop, state machine, spawning,
 // collisions, scoring and the title / caught / escaped screens. The
-// zombie turkey flees the zombie farmer through the Graveyard, the
-// Haunted Barn and the Cursed Kitchen. New in this revision: brain-corn
-// (100 x combo), the night fog that limits vision, zombie chickens that
-// RISE AGAIN after being smashed, zombie crows to slide under, a chained
+// zombie turkey flees the zombie farmer through the Silly Graveyard, the
+// Haunted Barn and the Cursed Kitchen. Round 3: the characters got
+// funnier — a goofy zombie turkey (crossed eyes, party hat, toothless
+// grin, tipsy waddle), a clumsy zombie farmer (backwards pitchfork, hat
+// pops off, silly shouts), googly-eyed everything, and turkey taunts.
+// Mechanics unchanged from the zombie revision: brain-corn (100 x
+// combo), the night fog that limits vision, zombie chickens that RISE
+// AGAIN after being smashed, zombie crows to slide under, a chained
 // combo with a visible timer, and a zombie dash that leaves a slime trail.
 
 import { Turkey } from './turkey.js';
@@ -56,6 +60,7 @@ const game = {
   bannerTime: 0,
   flashText: null,
   flashTime: 0,
+  taunt: null,
   shakeTime: 0,
   stageIndex: 0,
   shotMode: null,
@@ -91,6 +96,7 @@ function startRun() {
   game.spawnIn = 600;
   game.stageIndex = 0;
   game.stageBanner = null;
+  game.taunt = null;
   game.shakeTime = 0;
   game.rng = new Rng((Date.now() % 2147483647) || 1337);
   // Drain any queued presses (e.g. an R tapped mid-run) so a fresh run
@@ -99,7 +105,7 @@ function startRun() {
   game.input.consumeDash();
   game.input.consumeRestart();
   game.input.consumeAny();
-  showBanner('STAGE 1 — GRAVEYARD', 'The dead run at night...');
+  showBanner('STAGE 1 — SILLY GRAVEYARD', 'The dead run at night... mostly into walls');
   game.sounds.ensure();
   game.sounds.groan();
 }
@@ -129,7 +135,7 @@ function hurtTurkey() {
   game.shakeTime = 0.35;
   game.sounds.hurt();
   game.particles.burst(game.turkey.x, game.turkey.y - 30, 'slime', 16);
-  flash('OUCH!');
+  flash('OWIE!');
   if (game.hearts <= 0) endRun(true);
 }
 
@@ -141,7 +147,7 @@ function collectCorn(ob) {
     game.score += 100 * game.combo;
     game.sounds.brain();
     game.particles.burst(ob.x + 15, ob.y + 20, 'brain', 12);
-    flash(`BRAIN-CORN! +${100 * game.combo}`);
+    flash(`NOM NOM NOM! +${100 * game.combo}`);
   } else {
     game.corn += 1;
     game.score += (ob.golden ? 50 : 10) * game.combo;
@@ -229,7 +235,7 @@ function updatePlaying(dt) {
   if (game.input.consumeDash() && game.turkey.startDash()) {
     game.sounds.dash();
     game.farmer.dashAway();
-    flash('ZOMBIE DASH!');
+    flash('WHEEE!');
   }
   if (game.turkey.dashing) {
     game.particles.burst(game.turkey.x - 30, game.turkey.y - 20, 'slime', 2);
@@ -291,7 +297,7 @@ function updatePlaying(dt) {
             game.turkey.dashCooldown = 0;
             game.turkey.startDash();
             game.sounds.dash();
-            flash('HOT SAUCE!');
+            flash('HOT SAUCE! WHEEE!');
           } else {
             collectCorn(ob);
           }
@@ -306,7 +312,8 @@ function updatePlaying(dt) {
         ob.used = true;
         game.farmer.loseTrack();
         game.sounds.groan();
-        flash('HIDDEN IN THE BRAMBLES!');
+        flash("SHHH... HE CAN'T SEE ME");
+        game.taunt = { text: 'NYAH NYAH!', time: 1.6 };
         game.particles.burst(ob.x + ob.w / 2, ob.y + 10, 'slime', 12);
       }
       continue;
@@ -329,7 +336,7 @@ function updatePlaying(dt) {
           ob.approach += 40;
           game.sounds.rise();
           game.particles.burst(ob.x, GROUND_Y - 30, 'bone', 18);
-          flash('IT ROSE AGAIN!');
+          flash("I'M BAAAACK!");
         } else {
           ob.passed = true;
         }
@@ -342,7 +349,7 @@ function updatePlaying(dt) {
         game.score += 25;
         game.sounds.thud();
         game.particles.burst(ob.x + ob.w / 2, ob.y + 20, 'slime', 18);
-        flash('SMASHED THROUGH!');
+        flash('BONK!');
         continue;
       }
       if (ob.kind === 'zombieChicken' && game.turkey.dashing) {
@@ -351,7 +358,7 @@ function updatePlaying(dt) {
         game.sounds.slime();
         game.sounds.cackle();
         game.particles.burst(ob.x + ob.w / 2, ob.y + 10, 'bone', 18);
-        flash(ob.risesLeft > 0 ? 'SMASHED! IT WILL RISE...' : 'SMASHED FOR GOOD!');
+        flash(ob.risesLeft > 0 ? 'BONK! IT WILL RISE...' : 'BONK! FOR GOOD!');
         continue;
       }
       hurtTurkey();
@@ -374,6 +381,7 @@ function updatePlaying(dt) {
   game.particles.update(dt);
   if (game.bannerTime > 0) game.bannerTime -= dt;
   if (game.flashTime > 0) game.flashTime -= dt;
+  if (game.taunt && game.taunt.time > 0) game.taunt.time -= dt;
   if (game.shakeTime > 0) game.shakeTime -= dt;
 }
 
@@ -413,7 +421,7 @@ function drawTitleScreen() {
   ctx.fill();
   ctx.fillStyle = '#8be06a';
   ctx.font = 'bold 30px Georgia, serif';
-  ctx.fillText('THANKSGIVING IS COMING... THE DEAD ARE HUNGRY', 640, 112);
+  ctx.fillText('THANKSGIVING IS COMING... THE DEAD ARE HUNGRY (AND CLUMSY)', 640, 112);
   ctx.fillStyle = '#d8e8c8';
   ctx.font = 'bold 74px Georgia, serif';
   ctx.fillText('ZOMBIE TURKEY', 640, 190);
@@ -426,16 +434,16 @@ function drawTitleScreen() {
   ctx.textAlign = 'center';
   ctx.fillStyle = '#d8e8c8';
   ctx.font = 'bold 22px Georgia, serif';
-  ctx.fillText('You rose from the grave — and the zombie farmer wants your brains.', 640, 380);
-  ctx.fillText('Run through the graveyard, the haunted barn and the cursed kitchen!', 640, 410);
+  ctx.fillText('You rose from the grave — and the farmer wants your brains.', 640, 380);
+  ctx.fillText('He is slow, clumsy, and very, very hungry. Good luck.', 640, 410);
   ctx.font = '20px Georgia, serif';
   ctx.fillText('Jump tombstones & haystacks  •  Slide under zombie crows & cleavers', 640, 452);
-  ctx.fillText('Brain-corn is worth 100 x combo  •  Smashed chickens RISE AGAIN', 640, 482);
+  ctx.fillText('Brain-corn is worth 100 x combo  •  Smashed chickens come back. They always come back.', 640, 482);
   const blink = Math.floor(game.time * 2) % 2 === 0;
   if (blink) {
     ctx.fillStyle = '#ffd700';
     ctx.font = 'bold 30px Georgia, serif';
-    ctx.fillText('PRESS SPACE OR CLICK TO RUN', 640, 560);
+    ctx.fillText('PRESS SPACE OR CLICK TO RUN (HE IS RIGHT BEHIND YOU. SLOWLY.)', 640, 560);
   }
   ctx.fillStyle = 'rgba(216, 232, 200, 0.8)';
   ctx.font = '18px Georgia, serif';
@@ -460,8 +468,8 @@ function drawEndScreen(escaped) {
   ctx.font = 'bold 26px Georgia, serif';
   ctx.fillText(
     escaped
-      ? 'You outran the zombie farmer and reached the Freedom Forest!'
-      : `The zombie farmer grabbed you at ${Math.floor(game.distance)} m — brains for dinner...`,
+      ? 'You reached the Freedom Forest — the farmer lost his hat!'
+      : `The farmer grabbed you at ${Math.floor(game.distance)} m — brains for dinner... and he forgot the gravy.`,
     640, 310,
   );
   ctx.font = '24px Georgia, serif';
@@ -513,6 +521,32 @@ function draw() {
   // The night fog closes in around the turkey (not on the title screen).
   drawFog(ctx, game.turkey.x, game.turkey.y, WIDTH, HEIGHT);
 
+  // Turkey taunt bubble (NYAH NYAH!) after hiding in the brambles.
+  if (game.taunt && game.taunt.time > 0) {
+    ctx.save();
+    ctx.textAlign = 'left';
+    ctx.font = 'bold 17px Georgia, serif';
+    const w = ctx.measureText(game.taunt.text).width + 20;
+    const bx = Math.min(1240 - w, Math.max(8, game.turkey.x - w / 2));
+    const by = game.turkey.y - 128;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+    ctx.strokeStyle = '#8be06a';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(bx, by, w, 28, 10);
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(game.turkey.x - 8, by + 28);
+    ctx.lineTo(game.turkey.x + 8, by + 28);
+    ctx.lineTo(game.turkey.x, by + 40);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#2c3d22';
+    ctx.fillText(game.taunt.text, bx + 10, by + 20);
+    ctx.restore();
+  }
+
   // Stage banner.
   if (game.bannerTime > 0 && game.stageBanner) {
     const alpha = Math.min(1, game.bannerTime);
@@ -532,7 +566,7 @@ function draw() {
     ctx.restore();
   }
 
-  // Flash text (OUCH!, SMASHED!, BRAIN-CORN!, ...).
+  // Flash text (OWIE!, BONK!, NOM NOM NOM!, ...).
   if (game.flashTime > 0 && game.flashText) {
     ctx.save();
     ctx.globalAlpha = Math.min(1, game.flashTime * 2);

@@ -1,6 +1,7 @@
-// Levels — three stages of the zombie escape, each harder than the last:
-// the Graveyard, the Haunted Barn, and the Cursed Kitchen. Each stage
-// names its night palette, its speed, and which dangers it spawns.
+// Levels — three stages of the zombie escape, each harder (and sillier)
+// than the last: the Silly Graveyard, the Haunted Barn, and the Cursed
+// Kitchen. Each stage names its night palette, its speed, and which
+// dangers it spawns.
 
 export const STAGE_LENGTH = 600; // metres per stage
 export const STAGE_COUNT = 3;
@@ -8,8 +9,8 @@ export const ESCAPE_DISTANCE = STAGE_LENGTH * STAGE_COUNT;
 
 export const STAGES = [
   {
-    name: 'GRAVEYARD',
-    subtitle: 'The dead run at night...',
+    name: 'SILLY GRAVEYARD',
+    subtitle: 'The dead run at night... mostly into walls',
     skyTop: '#0a1626',
     skyBottom: '#1d3a2a',
     ground: '#2c3d22',
@@ -20,7 +21,7 @@ export const STAGES = [
   },
   {
     name: 'HAUNTED BARN',
-    subtitle: 'Something swings in the dark...',
+    subtitle: 'Something swings in the dark... probably a mop',
     skyTop: '#120a1e',
     skyBottom: '#3a2430',
     ground: '#3a2a1e',
@@ -31,7 +32,7 @@ export const STAGES = [
   },
   {
     name: 'CURSED KITCHEN',
-    subtitle: 'The cauldron bubbles. Do NOT get cooked!',
+    subtitle: 'The cauldron bubbles. The chef is confused.',
     skyTop: '#160a12',
     skyBottom: '#3d1e2a',
     ground: '#2e2a26',

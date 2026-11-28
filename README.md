@@ -6,14 +6,19 @@
 
 A zombie turkey escape game for the make.fun bounty **turkey-run-game-01**.
 
-Thanksgiving is coming and the dead are hungry. You rose from the grave as
-a zombie turkey — green skin, glowing eyes, tattered tail — and the zombie
-farmer wants your brains. Run through the Graveyard, the Haunted Barn and
-the Cursed Kitchen in the night fog: jump tombstones and haystacks, slide
-under zombie crows and swinging cleavers, dodge falling cleavers and the
-cursed oven's green flames, grab brain-corn for 100 x combo, dash on hot
-sauce, hide in the brambles — and make it to the forest gate. Careful:
-smashed zombie chickens RISE AGAIN.
+Thanksgiving is coming and the dead are hungry — and very, very clumsy.
+You rose from the grave as a goofy zombie turkey — crossed googly eyes, a
+toothless grin with one tooth, a lolling tongue, a crooked little party
+hat, a tipsy waddle — and the clumsy zombie farmer wants your brains. He
+holds his pitchfork backwards, his hat pops off when he trips, and he
+shouts very silly things ("MY DINNER IS RUNNING!", "I'M TOO OLD FOR
+THIS!"). Run through the Silly Graveyard, the Haunted Barn and the Cursed
+Kitchen in the night fog: jump tombstones (some say OOPS) and haystacks,
+slide under zombie crows and swinging cleavers, dodge falling cleavers
+and the cursed oven's green flames, grab brain-corn for 100 x combo, dash
+on hot sauce, hide in the brambles — and make it to the forest gate. Hide
+and the turkey taunts him: NYAH NYAH! Careful: smashed zombie chickens
+RISE AGAIN.
 
 ## Play
 
